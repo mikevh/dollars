@@ -1,7 +1,7 @@
 public class Transaction
 {
     public int Id { get; set; }
-    public string AccountId { get; set; } = string.Empty;
+    public int AccountId { get; set; }
     public string SourceId { get; set; } = string.Empty;
     public string Payee { get; set; } = string.Empty;
     public DateTime Date { get; set; }
