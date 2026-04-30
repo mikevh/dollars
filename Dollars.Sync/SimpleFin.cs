@@ -5,37 +5,6 @@ using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-public interface IFinancialDataProvider
-{
-    Task<SyncResult> GetTransactionsAsync(CancellationToken cancellationToken = default);
-}
-
-public class SyncResult
-{
-    public List<Account> Accounts { get; } = [];
-    public List<Trancaction> Transactions { get; } = [];
-    public List<string> Errors { get; set; } = [];
-}
-
-public class Account
-{
-    public string SourceId { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-    public decimal Balance { get; set; }
-    public DateTime Date { get; set; }
-}
-
-public class Trancaction
-{
-    public string SourceId { get; set; } = string.Empty;
-    public string AccountSourceId { get; set; } = string.Empty;
-    public string Payee { get; set; } = string.Empty;
-    public DateTime Date { get; set; }
-    public decimal Amount { get; set; } // if negative, it's an expense. if positive, it's income.
-    public string Description { get; set; } = string.Empty;
-    public string Memo { get; set; } = string.Empty;
-}
-
 public class SimpleFin : IFinancialDataProvider
 {
     private readonly HttpClient _httpClient;
@@ -61,13 +30,12 @@ public class SimpleFin : IFinancialDataProvider
 
         //var body = await QueryServiceAsync(cancellationToken);
         var body = await File.ReadAllTextAsync("sample.json", cancellationToken);
-
-        var rv = new SyncResult();
-
         var data = JsonSerializer.Deserialize<SimplefinAccountsResponse>(body, new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true,
         });
+
+        var rv = new SyncResult();
 
         if(data == null)
         {
@@ -85,30 +53,29 @@ public class SimpleFin : IFinancialDataProvider
             }
         }
 
-        rv.Accounts.AddRange(data.Accounts?.Select(a => new Account
-        {
-            SourceId = a.Id,
-            Name = a.Name,
-            Balance = decimal.TryParse(a.Balance, out var b) ? b : 0,
-            Date = DateTimeOffset.FromUnixTimeSeconds(a.BalanceDate).DateTime
-        }) ?? []);
-
         foreach(var a in data.Accounts ?? [])
-        {
-            if(a.Transactions == null) {
-                continue;
-            }
-
-            rv.Transactions.AddRange(a.Transactions.Select(t => new Trancaction
+        {            
+            rv.Accounts.Add(new Account
             {
-                SourceId = t.Id,
-                AccountSourceId = a.Id,
-                Payee = t.Payee ?? string.Empty,
-                Date = DateTimeOffset.FromUnixTimeSeconds(t.Posted).DateTime,
-                Amount = decimal.TryParse(t.Amount, out var amt) ? amt : 0,
-                Description = t.Description ?? string.Empty,
-                Memo = t.Memo ?? string.Empty
-            }));
+                SourceId = a.Id,
+                Name = a.Name,
+            });
+
+            rv.AccountBalances.Add(a.Id, new AccountBalance
+            {
+                Balance = decimal.TryParse(a.Balance, out var b) ? b : 0,
+                Date = DateTimeOffset.FromUnixTimeSeconds(a.BalanceDate).DateTime,
+            });
+            
+            rv.Transactions.Add(a.Id, a.Transactions?.Select(t => new Transaction
+                {
+                    SourceId = t.Id,
+                    Payee = t.Payee ?? "",
+                    Amount = decimal.TryParse(t.Amount, out var d) ? d : 0,
+                    Date = DateTimeOffset.FromUnixTimeSeconds(t.Posted).DateTime,
+                    Description = t.Description ?? "",
+                    Memo = t.Memo ?? "",
+                }).ToList() ?? []);            
         }
 
         return rv;
