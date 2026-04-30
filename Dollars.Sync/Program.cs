@@ -26,21 +26,41 @@ var host = Host.CreateDefaultBuilder(args)
 
 var providers = host.Services.GetRequiredService<IEnumerable<IFinancialDataProvider>>();
 var dataService = host.Services.GetRequiredService<DataService>();
+var repo = host.Services.GetRequiredService<AccountsRepo>();
 
-try
+foreach(var p in providers)
 {
-    foreach(var p in providers)
+    SyncResult result;
+    try
     {
-        var result = await p.GetTransactionsAsync();
+        var latestSync = await repo.LatestSyncLogForProvider(p.ProviderName);
+        if(!await p.ReadyToSync(latestSync?.SyncDate ?? DateTime.MinValue))
+        {
+            continue;
+        }
+        result = await p.GetTransactionsAsync();
         Console.WriteLine($"Provider: {p.GetType().Name}");
-        Console.WriteLine($"Accounts: {result.Accounts.Count}, Transactions: {result.Transactions.Count}, Errors: {result.Errors.Count}");
-
-        await dataService.Save(result);
-
+        Console.WriteLine($"Accounts: {result.Accounts.Count}, Transactions: {result.Transactions.Values.Sum(t => t.Count)}, Errors: {result.Errors.Count}");
+        await dataService.Save(result);            
     }
-}
-catch (Exception ex)
-{
-    Console.WriteLine($"Error: {ex.Message}");
+    catch(Exception ex)
+    {
+        Console.WriteLine($"Error syncing with provider {p.GetType().Name}: {ex.Message}");
+        result = new SyncResult
+        {
+            Errors = new List<string> { $"Exception during sync: {ex.Message}" }
+        };
+    }
+
+    await repo.SaveSyncLog(new SyncLog
+    {
+        SyncDate = DateTime.UtcNow,
+        Provider = p.ProviderName,
+        Success = result.Errors.Count == 0,
+        ErrorMessage = string.Join("; ", result.Errors),
+        TransactionCount = result.Transactions.Values.Sum(t => t.Count),
+        CreatedOn = DateTime.UtcNow,
+        UpdatedOn = DateTime.UtcNow
+    });
 }
 

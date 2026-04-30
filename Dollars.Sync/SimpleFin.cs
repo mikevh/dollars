@@ -10,12 +10,22 @@ public class SimpleFin : IFinancialDataProvider
     private readonly HttpClient _httpClient;
     private readonly SimpleFinSettings _settings;
     private readonly ILogger<SimpleFin> _logger;
+    public string ProviderName => "SimpleFIN";
 
     public SimpleFin(ILogger<SimpleFin> logger, HttpClient httpClient, IOptions<SimpleFinSettings> settings)
     {
         _httpClient = httpClient;
         _settings = settings.Value;
         _logger = logger;
+    }
+
+    public Task<bool> ReadyToSync(DateTime lastSync)
+    {
+        if(_settings.Enabled && DateTime.UtcNow > lastSync + TimeSpan.FromHours(_settings.WaitHours))
+        {
+            return Task.FromResult(true);
+        }
+        return Task.FromResult(false);
     }
 
     public async Task<SyncResult> GetTransactionsAsync(CancellationToken cancellationToken = default)
@@ -28,8 +38,7 @@ public class SimpleFin : IFinancialDataProvider
             };
         }
 
-        //var body = await QueryServiceAsync(cancellationToken);
-        var body = await File.ReadAllTextAsync("sample.json", cancellationToken);
+        var body = await QueryServiceAsync(cancellationToken);
         var data = JsonSerializer.Deserialize<SimplefinAccountsResponse>(body, new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true,

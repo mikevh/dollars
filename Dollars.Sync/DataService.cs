@@ -24,7 +24,7 @@ public class DataService
             b.Value.AccountId = accountIds[b.Key];
             
             var latestBalance = await _accountsRepo.LatestBalanceForAccountAsync(b.Value.AccountId);
-            if(latestBalance != null && latestBalance.Date > latestBalance.Date.AddHours(12)) // todo: make the time a setting
+            if(latestBalance == null || latestBalance.Date > latestBalance.Date.AddHours(12)) // todo: make the time a setting
             {
                 await _accountsRepo.SaveBalance(b.Value);                
             }

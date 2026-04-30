@@ -1,7 +1,6 @@
 using Microsoft.Data.SqlClient;
 using Dapper;
 using Microsoft.Extensions.Configuration;
-using Microsoft.VisualBasic;
 
 public class AccountsRepo : IDisposable
 {
@@ -69,6 +68,24 @@ public class AccountsRepo : IDisposable
         var sql = "insert Transactions (AccountId, SourceId, Payee, Date, Amount, Description, Memo, CreatedOn, UpdatedOn) values (@AccountId, @SourceId, @Payee, @Date, @Amount, @Description, @Memo, getutcdate(), getutcdate())";
         await conn.ExecuteAsync(sql, transactions.Where(t => !existingSourceIds.Contains(t.SourceId)));
     }   
+
+    public async Task<SyncLog?> LatestSyncLogForProvider(string providerName)
+    {
+        var conn = await GetConnection();
+
+        var sql = "select top 1 * from SyncLogs where Provider = @providerName order by SyncDate desc";
+        var rv = await conn.QueryFirstOrDefaultAsync<SyncLog>(sql, new { providerName });
+
+        return rv;
+    }
+
+    public async Task SaveSyncLog(SyncLog syncLog)
+    {
+        var conn = await GetConnection();
+        
+        var sql = "insert SyncLogs (SyncDate, Provider, Success, ErrorMessage, TransactionCount, CreatedOn, UpdatedOn) values (@SyncDate, @Provider, @Success, @ErrorMessage, @TransactionCount, getutcdate(), getutcdate())";
+        await conn.ExecuteAsync(sql, syncLog);
+    }
 
     protected async Task<SqlConnection> GetConnection()
     {

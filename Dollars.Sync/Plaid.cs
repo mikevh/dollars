@@ -17,11 +17,18 @@ public class Plaid : IFinancialDataProvider
         _settings = settings.Value;
     }
 
+    public string ProviderName => "Plaid";
+
     public async Task<SyncResult> GetTransactionsAsync(CancellationToken cancellationToken = default)
     {
         return new SyncResult
         {
             Errors = new List<string> { "Plaid sync is disabled in settings." }
         };
+    }
+
+    public Task<bool> ReadyToSync(DateTime lastSync)
+    {
+        return Task.FromResult(false);
     }
 }

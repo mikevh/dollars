@@ -32,3 +32,15 @@ create table Transactions (
     INDEX IX_Transactions_Date_SoruceId ([Date], SourceId)
 )
 GO
+
+create table SyncLogs (
+    Id int primary key identity(1,1) not null,    
+    SyncDate datetime2 not null,
+    [Provider] nvarchar(255) not null,
+    Success bit not null,
+    ErrorMessage nvarchar(max) null,
+    TransactionCount int not null,
+    CreatedOn datetime2 not null,
+    UpdatedOn datetime2 not null,
+)
+go
