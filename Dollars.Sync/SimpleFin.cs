@@ -10,22 +10,28 @@ public class SimpleFin : IFinancialDataProvider
     private readonly HttpClient _httpClient;
     private readonly SimpleFinSettings _settings;
     private readonly ILogger<SimpleFin> _logger;
+    private readonly AccountsRepo _repo;
     public string ProviderName => "SimpleFIN";
 
-    public SimpleFin(ILogger<SimpleFin> logger, HttpClient httpClient, IOptions<SimpleFinSettings> settings)
+    public SimpleFin(ILogger<SimpleFin> logger, HttpClient httpClient, IOptions<SimpleFinSettings> settings, AccountsRepo repo)
     {
         _httpClient = httpClient;
         _settings = settings.Value;
         _logger = logger;
+        _repo = repo;
     }
 
-    public Task<bool> ReadyToSync(DateTime lastSync)
+    public async Task<bool> ReadyToSync()
     {
-        if(_settings.Enabled && DateTime.UtcNow > lastSync + TimeSpan.FromHours(_settings.WaitHours))
+        var latestSync = await _repo.LatestSyncLogForProvider(ProviderName);
+        var lastSyncDate = latestSync?.SyncDate ?? DateTime.MinValue;
+
+        if(_settings.Enabled && DateTime.UtcNow > lastSyncDate + TimeSpan.FromHours(_settings.WaitHours))
         {
-            return Task.FromResult(true);
+            return true;
         }
-        return Task.FromResult(false);
+
+        return false;
     }
 
     public async Task<SyncResult> GetTransactionsAsync(CancellationToken cancellationToken = default)
@@ -95,6 +101,10 @@ public class SimpleFin : IFinancialDataProvider
         var (accountsUrl, username, password) = ParseAccessUrl(_settings.AccessUrl);
         var endDate = DateTimeOffset.UtcNow;
         var startDate = endDate.AddDays(-_settings.SyncBackDays);
+
+        var latestSync = await _repo.LatestSyncLogForProvider(ProviderName);
+        endDate = (latestSync == null ? endDate.AddDays(_settings.SyncBackDays) : new DateTimeOffset(latestSync.SyncDate).AddHours(-2));
+
         var url = $"{accountsUrl}?start-date={startDate.ToUnixTimeSeconds()}&end-date={endDate.ToUnixTimeSeconds()}";
 
         var request = new HttpRequestMessage(HttpMethod.Get, url);

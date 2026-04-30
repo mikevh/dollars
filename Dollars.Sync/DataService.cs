@@ -23,20 +23,15 @@ public class DataService
         {
             b.Value.AccountId = accountIds[b.Key];
             
-            var latestBalance = await _accountsRepo.LatestBalanceForAccountAsync(b.Value.AccountId);
-            if(latestBalance == null || latestBalance.Date > latestBalance.Date.AddHours(12)) // todo: make the time a setting
-            {
-                await _accountsRepo.SaveBalance(b.Value);                
-            }
+            await _accountsRepo.SaveBalance(b.Value);
         }
         
         // transactions
         foreach(var kvp in data.Transactions)
         {
             var accountId = accountIds[kvp.Key];
-            var transactions = kvp.Value;
-            transactions.ForEach(t => t.AccountId = accountId);
-            await _accountsRepo.SaveTransactionsAsync(transactions);
+            kvp.Value.ForEach(t => t.AccountId = accountId);
+            await _accountsRepo.SaveTransactionsAsync(kvp.Value);
         }
     }
 }

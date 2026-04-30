@@ -27,7 +27,7 @@ public class Plaid : IFinancialDataProvider
         };
     }
 
-    public Task<bool> ReadyToSync(DateTime lastSync)
+    public Task<bool> ReadyToSync()
     {
         return Task.FromResult(false);
     }

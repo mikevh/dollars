@@ -33,8 +33,7 @@ foreach(var p in providers)
     SyncResult result;
     try
     {
-        var latestSync = await repo.LatestSyncLogForProvider(p.ProviderName);
-        if(!await p.ReadyToSync(latestSync?.SyncDate ?? DateTime.MinValue))
+        if(!await p.ReadyToSync())
         {
             continue;
         }

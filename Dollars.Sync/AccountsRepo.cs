@@ -40,16 +40,6 @@ public class AccountsRepo : IDisposable
         return id;
     }
 
-    public async Task<AccountBalance?> LatestBalanceForAccountAsync(int accountId)
-    {
-        var conn = await GetConnection();
-        
-        var sql = "select top 1 * from AccountBalances where AccountId = @AccountId order by [Date] desc";
-        var balance = await conn.QueryFirstOrDefaultAsync<AccountBalance>(sql, new { AccountId = accountId });
-
-        return balance;
-    }
-
     public async Task SaveBalance(AccountBalance balance)
     {
         var conn = await GetConnection();
