@@ -9,29 +9,40 @@ public class DataService
 
     public async Task Save(SyncResult data)
     {
+        var trans = await _accountsRepo.BeginTransactionAsync();
         var accountIds = new Dictionary<string, int>();
 
-        // account
-        foreach(var a in data.Accounts)
+        try
         {
-            var id = await _accountsRepo.EnsureAccountAsync(a);
-            accountIds[a.SourceId] = id;
-        }
+            // account
+            foreach(var a in data.Accounts)
+            {
+                var id = await _accountsRepo.EnsureAccountAsync(a, trans);
+                accountIds[a.SourceId] = id;
+            }
 
-        // balances
-        foreach(var b in data.AccountBalances)
-        {
-            b.Value.AccountId = accountIds[b.Key];
+            // balances
+            foreach(var b in data.AccountBalances)
+            {
+                b.Value.AccountId = accountIds[b.Key];
+                
+                await _accountsRepo.SaveBalanceAsync(b.Value, trans);
+            }
             
-            await _accountsRepo.SaveBalance(b.Value);
+            // transactions
+            foreach(var kvp in data.Transactions)
+            {
+                var accountId = accountIds[kvp.Key];
+                kvp.Value.ForEach(t => t.AccountId = accountId);
+                await _accountsRepo.SaveTransactionsAsync(kvp.Value, trans);
+            }
+
+            await trans.CommitAsync();
         }
-        
-        // transactions
-        foreach(var kvp in data.Transactions)
+        catch(Exception)
         {
-            var accountId = accountIds[kvp.Key];
-            kvp.Value.ForEach(t => t.AccountId = accountId);
-            await _accountsRepo.SaveTransactionsAsync(kvp.Value);
+            await trans.RollbackAsync();
+            throw;
         }
     }
 }

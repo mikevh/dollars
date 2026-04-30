@@ -23,7 +23,7 @@ public class SimpleFin : IFinancialDataProvider
 
     public async Task<bool> ReadyToSync()
     {
-        var latestSync = await _repo.LatestSyncLogForProvider(ProviderName);
+        var latestSync = await _repo.LatestSyncLogForProviderAsync(ProviderName);
         var lastSyncDate = latestSync?.SyncDate ?? DateTime.MinValue;
 
         if(_settings.Enabled && DateTime.UtcNow > lastSyncDate + TimeSpan.FromHours(_settings.WaitHours))
@@ -102,7 +102,7 @@ public class SimpleFin : IFinancialDataProvider
         var endDate = DateTimeOffset.UtcNow;
         var startDate = endDate.AddDays(-_settings.SyncBackDays);
 
-        var latestSync = await _repo.LatestSyncLogForProvider(ProviderName);
+        var latestSync = await _repo.LatestSyncLogForProviderAsync(ProviderName);
         endDate = (latestSync == null ? endDate.AddDays(_settings.SyncBackDays) : new DateTimeOffset(latestSync.SyncDate).AddHours(-2));
 
         var url = $"{accountsUrl}?start-date={startDate.ToUnixTimeSeconds()}&end-date={endDate.ToUnixTimeSeconds()}";

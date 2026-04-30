@@ -51,7 +51,11 @@ foreach(var p in providers)
         };
     }
 
-    await repo.SaveSyncLog(new SyncLog
+    // todo: this shouldn't be here
+    // todo: the transactioncount should be aware of how many were new
+    // todo: check for updated transactions? same id, but updated data?
+
+    await repo.SaveSyncLogAsync(new SyncLog
     {
         SyncDate = DateTime.UtcNow,
         Provider = p.ProviderName,
