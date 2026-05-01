@@ -34,8 +34,6 @@ public class Plaid : IFinancialDataProvider
         //         }.AddPlaidConverters()
         // );
 
-        // todo: while(response.hasmore) - rv needs to add, not set the properties
-           
         var response = await plaid.TransactionsSyncAsync(new TransactionsSyncRequest
         {
             ClientId = _settings.ClientId,
@@ -43,7 +41,7 @@ public class Plaid : IFinancialDataProvider
             AccessToken = _settings.AccessToken,
             Cursor = string.IsNullOrEmpty(cursor) ? null : cursor,
             Count = 500,
-            ShowRawJson = true
+            //ShowRawJson = true
         });        
         
         await _repo.SaveSyncLogAsync(new SyncLog
@@ -71,6 +69,7 @@ public class Plaid : IFinancialDataProvider
             return rv;
         }
 
+        rv.HasMore = response.HasMore;
         rv.Accounts = response.Accounts.Select(a => new Account
         {
             SourceId = a.AccountId,
@@ -99,46 +98,19 @@ public class Plaid : IFinancialDataProvider
         return rv;
     }
 
-    public Task<bool> ReadyToSync()
+    public async Task<bool> ReadyToSync()
     {
-        return Task.FromResult(true);
+        var latest = await _repo.LatestSyncLogForProviderAsync(ProviderName);
+        if(latest == null || latest.CreatedOn + TimeSpan.FromHours(4) < DateTime.UtcNow)
+        {
+            return true;
+        }
+
+        return false;
     }
 }
 
 public class SyncLogData
 {
     public string Cursor { get; set; } = string.Empty;
-}
-
-public class PlaidSyncState
-{
-    public int Id { get; set; }
-    public string? ItemId { get; set; }
-    public string AccessToken { get; set; } = string.Empty;
-    public string NextCursor { get; set; } = string.Empty;
-    public DateTime LastSyncAt { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public DateTime UpdatedAt { get; set; }
-}
-
-public class PlaidTransaction
-{
-    public int Id { get; set; }
-    public string PlaidTransactionId { get; set; } = string.Empty;
-    public string AccountId { get; set; } = string.Empty;
-    public string? AccountName { get; set; }
-    public decimal Amount { get; set; }
-    public DateOnly Date { get; set; }
-    public DateOnly? AuthorizedDate { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public string? MerchantName { get; set; }
-    public string? PersonalFinanceCategory { get; set; }
-    public bool Pending { get; set; }
-    public string? PendingTransactionId { get; set; }
-    public string? PaymentChannel { get; set; }
-    public string? IsoCurrencyCode { get; set; }
-    public string? JsonData { get; set; }
-    public bool IsRemoved { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public DateTime UpdatedAt { get; set; }
 }

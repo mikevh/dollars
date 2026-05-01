@@ -33,14 +33,15 @@ foreach(var p in providers)
     SyncResult result;
     try
     {
-        if(!await p.ReadyToSync())
+        if(!await p.ReadyToSync()) continue;
+
+        do
         {
-            continue;
-        }
-        result = await p.GetTransactionsAsync();
-        Console.WriteLine($"Provider: {p.GetType().Name}");
-        Console.WriteLine($"Accounts: {result.Accounts.Count}, Transactions: {result.Transactions.Values.Sum(t => t.Count)}, Errors: {result.Errors.Count}");
-        await dataService.Save(result);            
+            result = await p.GetTransactionsAsync();
+            Console.WriteLine($"Provider: {p.GetType().Name}");
+            Console.WriteLine($"Accounts: {result.Accounts.Count}, Transactions: {result.Transactions.Values.Sum(t => t.Count)}, Errors: {result.Errors.Count}");
+            await dataService.Save(result);
+        } while(result.HasMore);
     }
     catch(Exception ex)
     {
@@ -53,7 +54,4 @@ foreach(var p in providers)
 
     // todo: the transactioncount should be aware of how many were new
     // todo: check for updated transactions? same id, but updated data?
-
-    
 }
-
