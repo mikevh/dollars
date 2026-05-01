@@ -40,7 +40,39 @@ create table SyncLogs (
     Success bit not null,
     ErrorMessage nvarchar(max) null,
     TransactionCount int not null,
+    JsonData nvarchar(max) not null,
     CreatedOn datetime2 not null,
     UpdatedOn datetime2 not null,
 )
 go
+
+create table PlaidSyncState (
+    Id int primary key identity(1,1) not null,
+    ItemId NVARCHAR(256),
+    AccessToken NVARCHAR(512) not null,
+    NextCursor NVARCHAR(256) not null,
+    LastSyncAt datetime2 not null,
+    CreatedAt datetime2 not null,
+    UpdatedAt datetime2 not null,
+)
+
+GO
+create table PlaidTransactions (
+    Id int primary key identity(1,1) not null,
+    PlaidSyncStateId nvarchar(450) not null,
+    AccountId nvarchar(450) not null,
+    AccountName nvarchar(256),
+    Amount decimal(18, 2) not null,
+    [Date] date not null,
+    AuthorizedDate date not null,
+    [Name] nvarchar(512) not null,
+    MerchantName nvarchar(512),
+    PersonalFinanceCategory nvarchar(256),
+    Pending bit not null,
+    PendingTransactionId nvarchar(450),
+    PaymentChannel nvarchar(64),
+    IsoCurrencyCode nvarchar(10),
+    JsonData nvarchar(max) not null,
+    CreatedAt datetime2 not null,
+    UpdatedAt datetime2 not null
+)

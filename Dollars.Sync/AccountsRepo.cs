@@ -82,7 +82,7 @@ public class AccountsRepo : IDisposable
     {
         var conn = trans?.Connection ?? await GetConnectionAsync();
         
-        var sql = "insert SyncLogs (SyncDate, Provider, Success, ErrorMessage, TransactionCount, CreatedOn, UpdatedOn) values (@SyncDate, @Provider, @Success, @ErrorMessage, @TransactionCount, getutcdate(), getutcdate())";
+        var sql = "insert SyncLogs (SyncDate, Provider, Success, ErrorMessage, TransactionCount, JsonData, CreatedOn, UpdatedOn) values (@SyncDate, @Provider, @Success, @ErrorMessage, @TransactionCount, @JsonData, getutcdate(), getutcdate())";
         await conn.ExecuteAsync(sql, syncLog, trans);
     }
 

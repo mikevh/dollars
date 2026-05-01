@@ -6,6 +6,7 @@ public class SyncLog
     public bool Success { get; set; }
     public string ErrorMessage { get; set; } = string.Empty;
     public int TransactionCount { get; set; }
+    public string JsonData { get; set; } = string.Empty;
     public DateTime CreatedOn { get; set; }
     public DateTime UpdatedOn { get; set; }
 }
