@@ -68,6 +68,8 @@ public class SimpleFin : IFinancialDataProvider
             }
         }
 
+        // todo: write sync log here
+
         foreach(var a in data.Accounts ?? [])
         {            
             rv.Accounts.Add(new Account

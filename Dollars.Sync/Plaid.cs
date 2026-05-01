@@ -1,23 +1,18 @@
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using Going.Plaid;
-using Going.Plaid.Converters;
 using Going.Plaid.Transactions;
 using Microsoft.Extensions.Options;
 
 public class Plaid : IFinancialDataProvider
 {
     private readonly PlaidSettings _settings;
-    //private readonly PlaidClient _plaidClient;
     private readonly AccountsRepo _repo;
     public string ProviderName => "Plaid";
 
     public Plaid(IOptions<PlaidSettings> settings, 
-    //PlaidClient plaidClient, 
     AccountsRepo repo)
     {
         _settings = settings.Value;
-        //_plaidClient = plaidClient;
         _repo = repo;
     }
 
@@ -25,42 +20,57 @@ public class Plaid : IFinancialDataProvider
     {
         var rv = new SyncResult();
         var latest = await _repo.LatestSyncLogForProviderAsync(ProviderName);
-        var cursor = JsonSerializer.Deserialize<SyncLogData>(latest?.JsonData ?? "{}")?.Cursor ?? null;
+        
+        var cursor = !string.IsNullOrEmpty(latest?.JsonData) ? JsonSerializer.Deserialize<SyncLogData>(latest.JsonData).Cursor : null;
 
         var plaid = new PlaidClient(Going.Plaid.Environment.Production);
         
-        var response = JsonSerializer.Deserialize<TransactionsSyncResponse>(
-            await File.ReadAllTextAsync("plaid_sample.json", cancellationToken), 
-            options: new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true,
-                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-                }.AddPlaidConverters()
-        );
+        // var response = JsonSerializer.Deserialize<TransactionsSyncResponse>(
+        //     await File.ReadAllTextAsync("plaid_sample.json", cancellationToken), 
+        //     options: new JsonSerializerOptions
+        //         {
+        //             PropertyNameCaseInsensitive = true,
+        //             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        //         }.AddPlaidConverters()
+        // );
 
-        // var response = await plaid.TransactionsSyncAsync(new TransactionsSyncRequest
-        // {
-        //     ClientId = _settings.ClientId,
-        //     Secret = _settings.Secret,
-        //     AccessToken = _settings.AccessToken,
-        //     Cursor = string.IsNullOrEmpty(cursor) ? null : cursor,
-        //     Count = 500,
-        //     ShowRawJson = true
-        // });
+        // todo: while(response.hasmore) - rv needs to add, not set the properties
+           
+        var response = await plaid.TransactionsSyncAsync(new TransactionsSyncRequest
+        {
+            ClientId = _settings.ClientId,
+            Secret = _settings.Secret,
+            AccessToken = _settings.AccessToken,
+            Cursor = string.IsNullOrEmpty(cursor) ? null : cursor,
+            Count = 500,
+            ShowRawJson = true
+        });        
+        
+        await _repo.SaveSyncLogAsync(new SyncLog
+        {
+            SyncDate = DateTime.UtcNow,
+            Provider = ProviderName,
+            Success = !response.IsSuccessStatusCode,
+            JsonData = JsonSerializer.Serialize(new SyncLogData { Cursor = response.NextCursor }),
+            ErrorMessage = response?.Error?.ErrorMessage ?? "",
+            TransactionCount = response?.Added.Count() ?? 0,
+            CreatedOn = DateTime.UtcNow,
+            UpdatedOn = DateTime.UtcNow
+        });
 
-        // if (!response.IsSuccessStatusCode)
-        // {
-        //     var error = response.Error;
-        //     rv.Errors.Add($"Plaid API error: {error?.ErrorCode} - {error?.ErrorMessage}");
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = response.Error;
+            rv.Errors.Add($"Plaid API error: {error?.ErrorCode} - {error?.ErrorMessage}");
 
-        //     if (error?.ErrorCode == "ITEM_LOGIN_REQUIRED")
-        //     {
-        //         rv.Errors.Add("Bank connection requires re-authentication. Re-link the item in Plaid.");
-        //     }
+            if (error?.ErrorCode == "ITEM_LOGIN_REQUIRED")
+            {
+                rv.Errors.Add("Bank connection requires re-authentication. Re-link the item in Plaid.");
+            }
 
-        //     return rv;
-        // }
-    
+            return rv;
+        }
+
         rv.Accounts = response.Accounts.Select(a => new Account
         {
             SourceId = a.AccountId,
@@ -79,13 +89,13 @@ public class Plaid : IFinancialDataProvider
                 .Select(t => new Transaction
                 {
                     SourceId = t.TransactionId ?? "",
-                    Payee = t.MerchantName ?? "",
-                    Amount = t.Amount ?? 0,
+                    Payee = t.Name ?? "",
+                    Amount = (t.Amount ?? 0) * -1,
                     Date = (t.Date ?? DateOnly.MinValue).ToDateTime(TimeOnly.MinValue),
                     Description = t.OriginalDescription ?? "",
                 }).ToList());
         }
-
+        
         return rv;
     }
 
