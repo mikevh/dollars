@@ -25,10 +25,10 @@ public class DataService
             foreach(var b in data.AccountBalances)
             {
                 b.Value.AccountId = accountIds[b.Key];
-                
+
                 await _accountsRepo.SaveBalanceAsync(b.Value, trans);
             }
-            
+
             // transactions
             foreach(var kvp in data.Transactions)
             {
@@ -43,6 +43,15 @@ public class DataService
         {
             await trans.RollbackAsync();
             throw;
+        }
+        finally
+        {
+            var conn = trans.Connection;
+            await trans.DisposeAsync();
+            if (conn is IAsyncDisposable asyncConn)
+            {
+                await asyncConn.DisposeAsync();                
+            }
         }
     }
 }

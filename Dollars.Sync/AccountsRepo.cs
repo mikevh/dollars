@@ -4,10 +4,9 @@ using Microsoft.Extensions.Configuration;
 using System.Data.Common;
 using System.Data;
 
-public class AccountsRepo : IDisposable
+public class AccountsRepo
 {
-    private string _connectionString;
-    private SqlConnection? _sqlConnection;
+    private readonly string _connectionString;
 
     public AccountsRepo(IConfiguration config)
     {
@@ -16,89 +15,93 @@ public class AccountsRepo : IDisposable
 
     public async Task<DbTransaction> BeginTransactionAsync()
     {
-        var conn = await GetConnectionAsync();
-        var trans = await conn.BeginTransactionAsync();
-        return trans;
+        var conn = new SqlConnection(_connectionString);
+        await conn.OpenAsync();
+        var rv = await conn.BeginTransactionAsync();
+
+        return rv;
     }
 
-    public async Task<Account?> GetByIdAsync(int id, DbTransaction? trans = default)
+    public async Task<Account?> GetByIdAsync(int Id, IDbTransaction? trans = default)
     {
-        var conn = trans?.Connection ?? await GetConnectionAsync();
+        var sql = "select * from Accounts where Id = @Id"; // todo: don't select *
+        var rv = await WithConnAsync(trans, c => c.QueryFirstOrDefaultAsync<Account>(sql, new { Id }, trans));
 
-        var sql = "select * from Accounts where Id = @Id";
-        var account = await conn.QueryFirstOrDefaultAsync<Account>(sql, new { Id = id }, trans);
-
-        return account;
+        return rv;
     }
 
-    public async Task<int> EnsureAccountAsync(Account account, DbTransaction? trans = default)
+    public async Task<int> EnsureAccountAsync(Account account, IDbTransaction? trans = default)
     {
-        var conn = trans?.Connection ?? await GetConnectionAsync();        
-
-        var sql = "select Id from Accounts where SourceId = @SourceId and UserId = @UserId";
-        var id = await conn.QueryFirstOrDefaultAsync<int>(sql, account, trans);
-        
-        if(id != 0)
+        var rv = await WithConnAsync(trans, async c =>
         {
-            return id;
-        }
+            var sql = "select Id from Accounts where SourceId = @SourceId and UserId = @UserId";
+            var id = await c.QueryFirstOrDefaultAsync<int>(sql, account, trans);
 
-        sql = "insert Accounts(UserId, SourceId, Name, CreatedOn, UpdatedOn) values(@UserId, @SourceId, @Name, getutcdate(), getutcdate()); select cast(scope_identity() as int)";
-        id = await conn.ExecuteScalarAsync<int>(sql, account, trans);
-        
-        return id;
+            if (id != 0) 
+            {
+                return id;
+            }
+
+            sql = "insert Accounts(UserId, SourceId, Name, CreatedOn, UpdatedOn) values(@UserId, @SourceId, @Name, getutcdate(), getutcdate()); select cast(scope_identity() as int)";
+            return await c.ExecuteScalarAsync<int>(sql, account, trans);
+        });
+
+        return rv;
     }
 
     public async Task SaveBalanceAsync(AccountBalance balance, IDbTransaction? trans = null)
     {
-        var conn = trans?.Connection ?? await GetConnectionAsync();
-        
-        var sql = "insert AccountBalances (AccountId, Balance, Date, CreatedOn, UpdatedOn) values (@AccountId, @Balance, @Date, getutcdate(), getutcdate())";;
-        await conn.ExecuteAsync(sql, balance, trans);
+        var sql = "insert AccountBalances (AccountId, Balance, Date, CreatedOn, UpdatedOn) values (@AccountId, @Balance, @Date, getutcdate(), getutcdate())";
+        await WithConnAsync(trans, c => c.ExecuteAsync(sql, balance, trans));
     }
 
-    public async Task SaveTransactionsAsync(IEnumerable<Transaction> transactions, IDbTransaction? trans = null)
+    public async Task SaveTransactionsAsync(IEnumerable<Transaction> txs, IDbTransaction? trans = null)
     {
-        var conn = trans?.Connection ?? await GetConnectionAsync();
-        
-        var existingSourceIds = await conn.QueryAsync<string>("select SourceId from Transactions where SourceId in @SourceIds", 
-            new { SourceIds = transactions.Select(t => t.SourceId) }, trans);
-    
-        var sql = "insert Transactions (AccountId, SourceId, Payee, Date, Amount, Description, Memo, CreatedOn, UpdatedOn) values (@AccountId, @SourceId, @Payee, @Date, @Amount, @Description, @Memo, getutcdate(), getutcdate())";
-        await conn.ExecuteAsync(sql, transactions.Where(t => !existingSourceIds.Contains(t.SourceId)), trans);
-    }   
+        await WithConnectionAsync(trans, async c =>
+        {
+            var sql = "select SourceId from Transactions where SourceId in @SourceIds";
+            var existing = await c.QueryAsync<string>( sql, new { SourceIds = txs.Select(t => t.SourceId) }, trans);
+
+            sql = "insert Transactions (AccountId, SourceId, Payee, Date, Amount, Description, Memo, CreatedOn, UpdatedOn) values (@AccountId, @SourceId, @Payee, @Date, @Amount, @Description, @Memo, getutcdate(), getutcdate())";
+            await c.ExecuteAsync(sql, txs.Where(t => !existing.Contains(t.SourceId)), trans);
+        });
+    }
 
     public async Task<SyncLog?> LatestSyncLogForProviderAsync(string providerName, IDbTransaction? trans = null)
     {
-        var conn = trans?.Connection ?? await GetConnectionAsync();
-
-        var sql = "select top 1 * from SyncLogs where Provider = @providerName order by SyncDate desc";
-        var rv = await conn.QueryFirstOrDefaultAsync<SyncLog>(sql, new { providerName }, trans);
+        var sql = "select top 1 * from SyncLogs where Provider = @providerName order by SyncDate desc"; // todo: don't select *
+        var rv = await WithConnAsync(trans, c => c.QueryFirstOrDefaultAsync<SyncLog>(sql, new { providerName }, trans));
 
         return rv;
     }
 
     public async Task SaveSyncLogAsync(SyncLog syncLog, IDbTransaction? trans = null)
     {
-        var conn = trans?.Connection ?? await GetConnectionAsync();
-        
         var sql = "insert SyncLogs (SyncDate, Provider, Success, ErrorMessage, TransactionCount, JsonData, CreatedOn, UpdatedOn) values (@SyncDate, @Provider, @Success, @ErrorMessage, @TransactionCount, @JsonData, getutcdate(), getutcdate())";
-        await conn.ExecuteAsync(sql, syncLog, trans);
+        await WithConnAsync(trans, conn => conn.ExecuteAsync(sql, syncLog, trans));
     }
 
-    protected async Task<SqlConnection> GetConnectionAsync()
+    private async Task<T> WithConnAsync<T>(IDbTransaction? trans, Func<SqlConnection, Task<T>> action)
     {
-        _sqlConnection ??= new SqlConnection(_connectionString);
-        if(_sqlConnection.State != System.Data.ConnectionState.Open)
+        if (trans?.Connection is SqlConnection existing)
+            return await action(existing);
+
+        await using var conn = new SqlConnection(_connectionString);
+        await conn.OpenAsync();
+        var rv = await action(conn);
+        return rv;
+    }
+
+    private async Task WithConnectionAsync(IDbTransaction? trans, Func<SqlConnection, Task> action)
+    {
+        if (trans?.Connection is SqlConnection existing)
         {
-            await _sqlConnection.OpenAsync();
+            await action(existing);
+            return;
         }
 
-        return _sqlConnection;
-    }
-
-    public void Dispose()
-    {        
-        _sqlConnection?.Dispose();
+        await using var conn = new SqlConnection(_connectionString);
+        await conn.OpenAsync();
+        await action(conn);
     }
 }
