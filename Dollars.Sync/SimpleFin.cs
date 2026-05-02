@@ -38,14 +38,6 @@ public class SimpleFin : IFinancialDataProvider
 
     public async Task<SyncResult> GetTransactionsAsync(CancellationToken cancellationToken = default)
     {
-        if(!_settings.Enabled)
-        {
-            return new SyncResult
-            {
-                Errors = new List<string> { "SimpleFIN sync is disabled in settings." }
-            };
-        }
-
         var body = await QueryServiceAsync(cancellationToken);
         var data = JsonSerializer.Deserialize<SimplefinAccountsResponse>(body, new JsonSerializerOptions
         {
@@ -107,7 +99,9 @@ public class SimpleFin : IFinancialDataProvider
         var startDate = endDate.AddDays(-_settings.SyncBackDays);
 
         var latestSync = await _repo.LatestSyncLogForProviderAsync(ProviderName);
-        endDate = (latestSync == null ? endDate.AddDays(_settings.SyncBackDays) : new DateTimeOffset(latestSync.SyncDate).AddHours(-2));
+        endDate = latestSync == null ? 
+                    endDate.AddDays(_settings.SyncBackDays) : 
+                    new DateTimeOffset(latestSync.SyncDate).AddHours(-2);
 
         var url = $"{accountsUrl}?start-date={startDate.ToUnixTimeSeconds()}&end-date={endDate.ToUnixTimeSeconds()}";
 
