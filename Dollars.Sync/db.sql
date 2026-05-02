@@ -76,3 +76,14 @@ create table PlaidTransactions (
     CreatedAt datetime2 not null,
     UpdatedAt datetime2 not null
 )
+
+CREATE TABLE [Logs] (
+
+   [Id] int IDENTITY(1,1) NOT NULL primary key,
+   [Message] nvarchar(max) NULL,
+   [MessageTemplate] nvarchar(max) NULL,
+   [Level] nvarchar(16) NULL,
+   [TimeStamp] datetime NULL,
+   [Exception] nvarchar(max) NULL,
+   [Properties] nvarchar(max) NULL
+);
