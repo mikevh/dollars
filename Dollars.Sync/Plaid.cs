@@ -1,23 +1,26 @@
 using System.Text.Json;
 using Going.Plaid;
 using Going.Plaid.Transactions;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 public class Plaid : IFinancialDataProvider
 {
     private readonly PlaidSettings _settings;
     private readonly AccountsRepo _repo;
+    private readonly ILogger _logger;
     public string ProviderName => "Plaid";
 
-    public Plaid(IOptions<PlaidSettings> settings, 
-    AccountsRepo repo)
+    public Plaid(IOptions<PlaidSettings> settings, AccountsRepo repo, ILogger<Plaid> logger)
     {
         _settings = settings.Value;
         _repo = repo;
+        _logger = logger;
     }
 
     public async Task<SyncResult> GetTransactionsAsync(CancellationToken cancellationToken = default)
     {
+        _logger.LogTrace("plaid::GetTransactionsAsync");
         var rv = new SyncResult();
         var latest = await _repo.LatestSyncLogForProviderAsync(ProviderName);
         
@@ -100,13 +103,18 @@ public class Plaid : IFinancialDataProvider
 
     public async Task<bool> ReadyToSync()
     {
-        var latest = await _repo.LatestSyncLogForProviderAsync(ProviderName);
-        if(latest == null || latest.CreatedOn + TimeSpan.FromHours(4) < DateTime.UtcNow)
+        var rv = false;
+        if(_settings.Enabled)
         {
-            return true;
+            var latest = await _repo.LatestSyncLogForProviderAsync(ProviderName);
+            if(latest == null || latest.CreatedOn + TimeSpan.FromHours(4) < DateTime.UtcNow)
+            {
+                rv = true;
+            }
         }
 
-        return false;
+        _logger.LogTrace("plaid::ReadyToSync() = {rv}", rv);
+        return rv;
     }
 }
 

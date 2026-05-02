@@ -23,10 +23,12 @@ public class SimpleFin : IFinancialDataProvider
 
     public async Task<bool> ReadyToSync()
     {
+        if(!_settings.Enabled) return false;
+
         var latestSync = await _repo.LatestSyncLogForProviderAsync(ProviderName);
         var lastSyncDate = latestSync?.SyncDate ?? DateTime.MinValue;
 
-        if(_settings.Enabled && DateTime.UtcNow > lastSyncDate + TimeSpan.FromHours(_settings.WaitHours))
+        if(DateTime.UtcNow > lastSyncDate + TimeSpan.FromHours(_settings.WaitHours))
         {
             return true;
         }

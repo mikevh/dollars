@@ -3,14 +3,17 @@ using Dapper;
 using Microsoft.Extensions.Configuration;
 using System.Data.Common;
 using System.Data;
+using Microsoft.Extensions.Logging;
 
 public class AccountsRepo
 {
     private readonly string _connectionString;
+    private readonly ILogger _logger;
 
-    public AccountsRepo(IConfiguration config)
+    public AccountsRepo(IConfiguration config, ILogger<AccountsRepo> logger)
     {
         _connectionString = config.GetConnectionString("DefaultConnection") ?? throw new Exception("Connection string 'DefaultConnection' not found.");
+        _logger = logger;
     }
 
     public async Task<DbTransaction> BeginTransactionAsync()
