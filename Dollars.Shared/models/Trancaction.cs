@@ -1,3 +1,5 @@
+namespace Dollars.Shared.Models;
+
 public class Transaction
 {
     public int Id { get; set; }

@@ -1,3 +1,5 @@
+using Dollars.Shared.Models;
+
 public class SyncResult
 {
     public List<Account> Accounts { get; set; } = [];

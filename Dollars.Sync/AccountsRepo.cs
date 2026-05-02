@@ -1,3 +1,4 @@
+using Dollars.Shared.Models;
 using Microsoft.Data.SqlClient;
 using Dapper;
 using Microsoft.Extensions.Configuration;

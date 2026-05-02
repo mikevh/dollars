@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Dollars.Shared.Models;
 using Going.Plaid;
 using Going.Plaid.Transactions;
 using Microsoft.Extensions.Logging;
