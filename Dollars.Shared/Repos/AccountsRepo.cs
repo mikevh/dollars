@@ -6,6 +6,8 @@ using System.Data.Common;
 using System.Data;
 using Microsoft.Extensions.Logging;
 
+namespace Dollars.Shared.Repos;
+
 public class AccountsRepo
 {
     private readonly string _connectionString;
@@ -24,6 +26,12 @@ public class AccountsRepo
         var rv = await conn.BeginTransactionAsync();
 
         return rv;
+    }
+
+    public async Task<IList<Transaction>> Transactions()
+    {
+        var rv = await WithConnAsync(null, c => c.QueryAsync<Transaction>("select top 100 * from Transactions order by Date desc"));
+        return rv.ToList();
     }
 
     public async Task<Account?> GetByIdAsync(int Id, IDbTransaction? trans = default)
@@ -82,13 +90,15 @@ public class AccountsRepo
     public async Task SaveSyncLogAsync(SyncLog syncLog, IDbTransaction? trans = null)
     {
         var sql = "insert SyncLogs (SyncDate, Provider, Success, ErrorMessage, TransactionCount, JsonData, CreatedOn, UpdatedOn) values (@SyncDate, @Provider, @Success, @ErrorMessage, @TransactionCount, @JsonData, getutcdate(), getutcdate())";
-        await WithConnAsync(trans, conn => conn.ExecuteAsync(sql, syncLog, trans));
+        await WithConnAsync(trans, c => c.ExecuteAsync(sql, syncLog, trans));
     }
 
     private async Task<T> WithConnAsync<T>(IDbTransaction? trans, Func<SqlConnection, Task<T>> action)
     {
         if (trans?.Connection is SqlConnection existing)
+        {
             return await action(existing);
+        }
 
         await using var conn = new SqlConnection(_connectionString);
         await conn.OpenAsync();

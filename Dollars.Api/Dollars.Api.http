@@ -1,6 +1,6 @@
 @Dollars.Api_HostAddress = http://localhost:5062
 
-GET {{Dollars.Api_HostAddress}}/weatherforecast/
+GET {{Dollars.Api_HostAddress}}/api/transactions/
 Accept: application/json
 
 ###

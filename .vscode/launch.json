@@ -9,7 +9,12 @@
             "type": "dotnet",
             "request": "launch",
             "projectPath": "${workspaceFolder}/Dollars.Sync/Dollars.Sync.csproj"
+        },
+        {
+            "name": "C#: Dollars.Api Debug",
+            "type": "dotnet",
+            "request": "launch",
+            "projectPath": "${workspaceFolder}/Dollars.Api/Dollars.Api.csproj"
         }
-
     ]
 }

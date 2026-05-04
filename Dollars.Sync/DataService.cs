@@ -1,3 +1,5 @@
+using Dollars.Shared.Repos;
+
 public class DataService
 {
     private readonly AccountsRepo _accountsRepo;
