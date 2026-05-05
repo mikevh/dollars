@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import './App.css'
+import ButtonPage from './ButtonPage'
 
 type Transaction = {
   id: number
@@ -32,6 +33,8 @@ const App = () => {
   if (error) return <p>Error: {error}</p>
 
   return (
+    <>
+    <ButtonPage />
     <table>
       <thead>
         <tr>
@@ -54,6 +57,7 @@ const App = () => {
         ))}
       </tbody>
     </table>
+    </>
   )
 }
 
