@@ -9,7 +9,9 @@
 
   <ItemGroup>
     <PackageReference Include="Dapper" Version="2.1.72" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.7" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="7.0.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.7" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Dollars.Shared\Dollars.Shared.csproj" />
