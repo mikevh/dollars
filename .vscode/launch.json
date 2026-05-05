@@ -15,6 +15,13 @@
             "type": "dotnet",
             "request": "launch",
             "projectPath": "${workspaceFolder}/Dollars.Api/Dollars.Api.csproj"
+        },
+        {
+            "name": "C#: Dollars.Kernel Debug",
+            "type": "dotnet",
+            "request": "launch",
+            "projectPath": "${workspaceFolder}/Dollars.Kernel/Dollars.Kernel.csproj"
         }
+        
     ]
 }
