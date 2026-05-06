@@ -46,7 +46,10 @@ if (app.Environment.IsDevelopment())
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
 
+    using var txn = await db.Database.BeginTransactionAsync();
+    
     // ensure roles exist
+
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<AppRole>>();
     if(!await roleManager.RoleExistsAsync(AppRoles.Admin))
     {
@@ -57,7 +60,19 @@ if (app.Environment.IsDevelopment())
         await roleManager.CreateAsync(new AppRole() { Name = AppRoles.User });
     }
 
-    // todo: seed admin user
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
+    var admin = await userManager.FindByNameAsync(builder.Configuration["Admin:User"] ?? throw new ArgumentException("Admin:User not found"));
+    if(admin == null)
+    {
+        admin = new AppUser
+        {
+            UserName = builder.Configuration["Admin:User"]
+        };
+        var result = await userManager.CreateAsync(admin, builder.Configuration["Admin:Password"] ?? throw new ArgumentException("User:Password not found"));
+        await userManager.AddToRolesAsync(admin, [AppRoles.Admin, AppRoles.User]);
+    }
+
+    await txn.CommitAsync();
 }
 
 // map features

@@ -8,25 +8,16 @@ using Microsoft.Extensions.Logging;
 
 namespace Dollars.Shared.Repos;
 
-public class AccountsRepo
+public class AccountsRepo : BaseRepo
 {
-    private readonly string _connectionString;
     private readonly ILogger _logger;
 
-    public AccountsRepo(IConfiguration config, ILogger<AccountsRepo> logger)
+    public AccountsRepo(IConfiguration config, ILogger<AccountsRepo> logger) : base(config)
     {
-        _connectionString = config.GetConnectionString("DefaultConnection") ?? throw new Exception("Connection string 'DefaultConnection' not found.");
         _logger = logger;
     }
 
-    public async Task<DbTransaction> BeginTransactionAsync()
-    {
-        var conn = new SqlConnection(_connectionString);
-        await conn.OpenAsync();
-        var rv = await conn.BeginTransactionAsync();
-
-        return rv;
-    }
+ 
 
     public async Task<IList<Transaction>> Transactions()
     {
@@ -93,29 +84,5 @@ public class AccountsRepo
         await WithConnAsync(trans, c => c.ExecuteAsync(sql, syncLog, trans));
     }
 
-    private async Task<T> WithConnAsync<T>(IDbTransaction? trans, Func<SqlConnection, Task<T>> action)
-    {
-        if (trans?.Connection is SqlConnection existing)
-        {
-            return await action(existing);
-        }
-
-        await using var conn = new SqlConnection(_connectionString);
-        await conn.OpenAsync();
-        var rv = await action(conn);
-        return rv;
-    }
-
-    private async Task WithConnectionAsync(IDbTransaction? trans, Func<SqlConnection, Task> action)
-    {
-        if (trans?.Connection is SqlConnection existing)
-        {
-            await action(existing);
-            return;
-        }
-
-        await using var conn = new SqlConnection(_connectionString);
-        await conn.OpenAsync();
-        await action(conn);
-    }
+    
 }
