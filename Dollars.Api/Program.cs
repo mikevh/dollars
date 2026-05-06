@@ -12,7 +12,9 @@ var builder = WebApplication.CreateBuilder(args);
 var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>()
     ?? throw new InvalidOperationException("Jwt settings not found");
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
+builder.Services.AddControllers();
 builder.Services.AddScoped<AccountsRepo>();
+builder.Services.AddScoped<LogsRepo>();
 builder.Services.AddDbContext<AppDbContext>(o => {
     o.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
@@ -86,8 +88,9 @@ app.MapGet("/me", async (ClaimsPrincipal cp) =>
     return Results.Ok(cp.Claims.ToDictionary(c => c.Type, c => c.Value));
 }).RequireAuthorization();
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
+app.MapControllers();
 
 app.Run();

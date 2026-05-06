@@ -12,7 +12,7 @@ public static class LoginUser
 
     public static void MapEndpoint(IEndpointRouteBuilder app)
     {
-        app.MapPost("login", async (
+        app.MapPost("/api/login", async (
             IOptions<JwtSettings> jwt,
             Request req, 
             UserManager<AppUser> um) =>

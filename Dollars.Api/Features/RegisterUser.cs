@@ -10,7 +10,7 @@ public static class RegisterUser
 
     public static void MapEndpoint(IEndpointRouteBuilder app)
     {
-        app.MapPost("register", async (
+        app.MapPost("/api/register", async (
             ILogger<Request> logger,
             Request req, 
             AppDbContext db,
