@@ -17,8 +17,7 @@ builder.Services.AddDbContext<AppDbContext>(o => {
     o.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 builder.Services.AddIdentity<AppUser, AppRole>().AddEntityFrameworkStores<AppDbContext>();
-builder.Services
-    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(o =>
     {
         o.TokenValidationParameters = new TokenValidationParameters
@@ -44,33 +43,31 @@ if (app.Environment.IsDevelopment())
     // todo: move to a helper class
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var um = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
+    var rm = scope.ServiceProvider.GetRequiredService<RoleManager<AppRole>>();
     db.Database.Migrate();
 
-    using var txn = await db.Database.BeginTransactionAsync();
+    // ensure roles exist    
+    if(!await rm.RoleExistsAsync(AppRoles.Admin))
+    {
+        await rm.CreateAsync(new AppRole() { Name = AppRoles.Admin });
+    }
+    if(!await rm.RoleExistsAsync(AppRoles.User))
+    {
+        await rm.CreateAsync(new AppRole() { Name = AppRoles.User });
+    }
     
-    // ensure roles exist
-
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<AppRole>>();
-    if(!await roleManager.RoleExistsAsync(AppRoles.Admin))
-    {
-        await roleManager.CreateAsync(new AppRole() { Name = AppRoles.Admin });
-    }
-    if(!await roleManager.RoleExistsAsync(AppRoles.User))
-    {
-        await roleManager.CreateAsync(new AppRole() { Name = AppRoles.User });
-    }
-
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
-    var admin = await userManager.FindByNameAsync(builder.Configuration["Admin:User"] ?? throw new ArgumentException("Admin:User not found"));
+    using var txn = await db.Database.BeginTransactionAsync();
+    var adminUsername = builder.Configuration["Admin:User"] ?? throw new ArgumentException("Admin:User setting found");
+    var adminPassword = builder.Configuration["Admin:Password"] ?? throw new ArgumentException("Admin:Password setting found");
+    var admin = await um.FindByNameAsync(adminUsername);
+    
     if(admin == null)
     {
-        admin = new AppUser
-        {
-            UserName = builder.Configuration["Admin:User"]
-        };
-        var result = await userManager.CreateAsync(admin, builder.Configuration["Admin:Password"] ?? throw new ArgumentException("User:Password not found"));
-        await userManager.AddToRolesAsync(admin, [AppRoles.Admin, AppRoles.User]);
-    }
+        admin = new AppUser { UserName = adminUsername };
+        await um.CreateAsync(admin, adminPassword);
+        await um.AddToRolesAsync(admin, [AppRoles.User, AppRoles.Admin]);
+    }    
 
     await txn.CommitAsync();
 }
