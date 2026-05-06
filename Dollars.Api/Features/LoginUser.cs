@@ -2,6 +2,7 @@ using System.Security.Claims;
 using System.Text;
 using Dollars.Api.Data;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 
@@ -12,7 +13,7 @@ public static class LoginUser
     public static void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapPost("login", async (
-            IConfiguration config, // todo: use IOptions
+            IOptions<JwtSettings> jwt,
             Request req, 
             UserManager<AppUser> um) =>
         {
@@ -24,7 +25,7 @@ public static class LoginUser
 
             var roles = await um.GetRolesAsync(user);
 
-            var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:SecretKey"] ?? throw new ArgumentException("Jwt:SecretKey not found")));
+            var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Value.SecretKey));
             var creds = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
             List<Claim> claims = [
                 new (JwtRegisteredClaimNames.Sub, user.Id.ToString()),
@@ -34,10 +35,10 @@ public static class LoginUser
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddMinutes(config.GetValue<int>("Jwt:ExpirationInMinutes")),
+                Expires = DateTime.UtcNow.AddMinutes(jwt.Value.ExpirationInMinutes),
                 SigningCredentials = creds,
-                Issuer = config["Jwt:Issuer"],
-                Audience = config["Jwt:Audience"],
+                Issuer = jwt.Value.Issuer,
+                Audience = jwt.Value.Audience,
             };
 
             var tokenHandler = new JsonWebTokenHandler();

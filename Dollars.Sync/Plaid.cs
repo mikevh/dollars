@@ -90,6 +90,7 @@ public class Plaid : IFinancialDataProvider
 
         foreach(var a in rv.Accounts)
         {
+#pragma warning disable CS0612 // yea it's marked as depcreated, i know but it shouldn't be
             rv.Transactions.Add(a.SourceId, response.Added.Where(x => x.AccountId == a.SourceId)
                 .Select(t => new Transaction
                 {
@@ -99,6 +100,7 @@ public class Plaid : IFinancialDataProvider
                     Date = (t.Date ?? DateOnly.MinValue).ToDateTime(TimeOnly.MinValue),
                     Description = t.OriginalDescription ?? "",
                 }).ToList());
+#pragma warning restore CS0612
         }
         
         return rv;

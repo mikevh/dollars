@@ -9,6 +9,9 @@ using Microsoft.IdentityModel.Tokens;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>()
+    ?? throw new InvalidOperationException("Jwt settings not found");
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
 builder.Services.AddScoped<AccountsRepo>();
 builder.Services.AddDbContext<AppDbContext>(o => {
     o.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
@@ -17,20 +20,20 @@ builder.Services.AddIdentity<AppUser, AppRole>().AddEntityFrameworkStores<AppDbC
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(o =>
-{
-    o.TokenValidationParameters = new TokenValidationParameters
     {
-        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-        ValidAudience = builder.Configuration["Jwt:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SecretKey"]
-            ?? throw new ArgumentException("Jwt:SecretKey not found"))),
-        ClockSkew = TimeSpan.FromSeconds(3),
-        ValidateIssuerSigningKey = true,
-        ValidateAudience = true,
-        ValidateIssuer = true,
-        ValidateLifetime = true
-    };
-});
+        o.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidIssuer = jwtSettings.Issuer,
+            ValidAudience = jwtSettings.Audience,
+            IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(
+                jwtSettings.SecretKey ?? throw new InvalidOperationException("Jwt:SecretKey not found"))),
+            ClockSkew = TimeSpan.FromSeconds(3),
+            ValidateIssuerSigningKey = true,
+            ValidateAudience = true,
+            ValidateIssuer = true,
+            ValidateLifetime = true
+        };
+    });
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
