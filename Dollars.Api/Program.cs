@@ -14,18 +14,22 @@ builder.Services.AddDbContext<AppDbContext>(o => {
     o.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 builder.Services.AddIdentity<AppUser, AppRole>().AddEntityFrameworkStores<AppDbContext>();
-builder.Services.AddAuthentication(o =>
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(o =>
 {
-   o.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-   o.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme; 
-}).AddJwtBearer(o =>
-{
-    o.TokenValidationParameters.ValidIssuer = builder.Configuration["Jwt:Issuer"];
-    o.TokenValidationParameters.ValidAudience = builder.Configuration["Jwt:Audience"];
-    o.TokenValidationParameters.IssuerSigningKey =
-        new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SecretKey"]
-        ?? throw new ArgumentException("Jwt:SecretKey not found")));
-    o.TokenValidationParameters.ClockSkew = TimeSpan.FromSeconds(3);
+    o.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SecretKey"]
+            ?? throw new ArgumentException("Jwt:SecretKey not found"))),
+        ClockSkew = TimeSpan.FromSeconds(3),
+        ValidateIssuerSigningKey = true,
+        ValidateAudience = true,
+        ValidateIssuer = true,
+        ValidateLifetime = true
+    };
 });
 builder.Services.AddAuthorization();
 
