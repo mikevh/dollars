@@ -6,6 +6,8 @@ namespace Dollars.Api.Data;
 
 public class AppDbContext : IdentityDbContext<AppUser, AppRole, int>
 {
+    public AppDbContext(DbContextOptions<AppDbContext> o) : base(o) { }
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder); // call this first
@@ -33,4 +35,10 @@ public class AppUser : IdentityUser<int>
 public class AppRole : IdentityRole<int>
 {
 
+}
+
+public static class AppRoles
+{
+    public const string Admin = "Admin";
+    public const string User = "User";
 }
