@@ -26,7 +26,7 @@ public class Plaid : IFinancialDataProvider
         _logger.LogTrace("plaid::GetTransactionsAsync");
         var rv = new SyncResult();
         var latest = await _repo.LatestSyncLogForProviderAsync(ProviderName);
-        
+        // todo: check for jsondata null passed to Deserialize
         var cursor = !string.IsNullOrEmpty(latest?.JsonData) ? JsonSerializer.Deserialize<SyncLogData>(latest.JsonData).Cursor : null;
 
         var plaid = new PlaidClient(Going.Plaid.Environment.Production);

@@ -98,13 +98,13 @@ public class SimpleFin : IFinancialDataProvider
     {
         var (accountsUrl, username, password) = ParseAccessUrl(_settings.AccessUrl);
         var endDate = DateTimeOffset.UtcNow;
-        var startDate = endDate.AddDays(-_settings.SyncBackDays);
+        var startDate = endDate.AddDays(-1 * _settings.SyncBackDays);
 
         var latestSync = await _repo.LatestSyncLogForProviderAsync(ProviderName);
         endDate = latestSync == null ? 
                     endDate.AddDays(_settings.SyncBackDays) : 
                     new DateTimeOffset(latestSync.SyncDate).AddHours(-2);
-
+        // todo: something is off here.... keeps getting the 45 day warning...
         var url = $"{accountsUrl}?start-date={startDate.ToUnixTimeSeconds()}&end-date={endDate.ToUnixTimeSeconds()}";
 
         var request = new HttpRequestMessage(HttpMethod.Get, url);
