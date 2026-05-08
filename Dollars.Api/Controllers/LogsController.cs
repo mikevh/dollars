@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 
 [Route("api/[controller]")]
 [ApiController]
-//[Authorize(Roles = AppRoles.Admin)]
+[Authorize(Roles = AppRoles.Admin)]
 public class LogsController : Controller
 {
     private readonly LogsRepo _repo;
