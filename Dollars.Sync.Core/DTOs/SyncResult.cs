@@ -1,5 +1,7 @@
 using Dollars.Shared.Models;
 
+namespace Dollars.Sync.Core;
+
 public class SyncResult
 {
     public List<Account> Accounts { get; set; } = [];

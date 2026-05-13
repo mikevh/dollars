@@ -1,3 +1,5 @@
+namespace Dollars.Sync.Core;
+
 public class PlaidSettings
 {
     public bool Enabled { get; set; } = false;

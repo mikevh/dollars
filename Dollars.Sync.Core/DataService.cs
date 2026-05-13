@@ -1,5 +1,7 @@
 using Dollars.Shared.Repos;
 
+namespace Dollars.Sync.Core;
+
 public class DataService
 {
     private readonly AccountsRepo _accountsRepo;
@@ -52,7 +54,7 @@ public class DataService
             await trans.DisposeAsync();
             if (conn is IAsyncDisposable asyncConn)
             {
-                await asyncConn.DisposeAsync();                
+                await asyncConn.DisposeAsync();
             }
         }
     }

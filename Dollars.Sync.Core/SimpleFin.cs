@@ -7,6 +7,8 @@ using Dollars.Shared.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
+namespace Dollars.Sync.Core;
+
 public class SimpleFin : IFinancialDataProvider
 {
     private readonly HttpClient _httpClient;
@@ -67,7 +69,7 @@ public class SimpleFin : IFinancialDataProvider
         // todo: write sync log here
 
         foreach(var a in data.Accounts ?? [])
-        {            
+        {
             rv.Accounts.Add(new Account
             {
                 SourceId = a.Id,
@@ -79,7 +81,7 @@ public class SimpleFin : IFinancialDataProvider
                 Balance = decimal.TryParse(a.Balance, out var b) ? b : 0,
                 Date = DateTimeOffset.FromUnixTimeSeconds(a.BalanceDate).DateTime,
             });
-            
+
             rv.Transactions.Add(a.Id, a.Transactions?.Select(t => new Transaction
                 {
                     SourceId = t.Id,
@@ -88,7 +90,7 @@ public class SimpleFin : IFinancialDataProvider
                     Date = DateTimeOffset.FromUnixTimeSeconds(t.Posted).DateTime,
                     Description = t.Description ?? "",
                     Memo = t.Memo ?? "",
-                }).ToList() ?? []);            
+                }).ToList() ?? []);
         }
 
         return rv;
@@ -101,8 +103,8 @@ public class SimpleFin : IFinancialDataProvider
         var startDate = endDate.AddDays(-1 * _settings.SyncBackDays);
 
         var latestSync = await _repo.LatestSyncLogForProviderAsync(ProviderName);
-        endDate = latestSync == null ? 
-                    endDate.AddDays(_settings.SyncBackDays) : 
+        endDate = latestSync == null ?
+                    endDate.AddDays(_settings.SyncBackDays) :
                     new DateTimeOffset(latestSync.SyncDate).AddHours(-2);
         // todo: something is off here.... keeps getting the 45 day warning...
         var url = $"{accountsUrl}?start-date={startDate.ToUnixTimeSeconds()}&end-date={endDate.ToUnixTimeSeconds()}";
@@ -113,7 +115,7 @@ public class SimpleFin : IFinancialDataProvider
 
         var response = await _httpClient.SendAsync(request, cancellationToken);
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
-        
+
         if(!response.IsSuccessStatusCode)
         {
             _logger.LogError("SimpleFIN returned {StatusCode}", response.StatusCode);

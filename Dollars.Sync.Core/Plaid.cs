@@ -1,4 +1,3 @@
-
 using Dollars.Shared.Repos;
 using System.Text.Json;
 using Dollars.Shared.Models;
@@ -6,6 +5,8 @@ using Going.Plaid;
 using Going.Plaid.Transactions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+
+namespace Dollars.Sync.Core;
 
 public class Plaid : IFinancialDataProvider
 {
@@ -30,15 +31,6 @@ public class Plaid : IFinancialDataProvider
         var cursor = !string.IsNullOrEmpty(latest?.JsonData) ? JsonSerializer.Deserialize<SyncLogData>(latest.JsonData).Cursor : null;
 
         var plaid = new PlaidClient(Going.Plaid.Environment.Production);
-        
-        // var response = JsonSerializer.Deserialize<TransactionsSyncResponse>(
-        //     await File.ReadAllTextAsync("plaid_sample.json", cancellationToken), 
-        //     options: new JsonSerializerOptions
-        //         {
-        //             PropertyNameCaseInsensitive = true,
-        //             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        //         }.AddPlaidConverters()
-        // );
 
         var response = await plaid.TransactionsSyncAsync(new TransactionsSyncRequest
         {
@@ -47,9 +39,8 @@ public class Plaid : IFinancialDataProvider
             AccessToken = _settings.AccessToken,
             Cursor = string.IsNullOrEmpty(cursor) ? null : cursor,
             Count = 500,
-            //ShowRawJson = true
-        });        
-        
+        });
+
         await _repo.SaveSyncLogAsync(new SyncLog
         {
             SyncDate = DateTime.UtcNow,
@@ -102,7 +93,7 @@ public class Plaid : IFinancialDataProvider
                 }).ToList());
 #pragma warning restore CS0612
         }
-        
+
         return rv;
     }
 

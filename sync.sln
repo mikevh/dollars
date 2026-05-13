@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.5.11723.231 stable
+VisualStudioVersion = 18.5.11723.231
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dollars.Sync", "Dollars.Sync\Dollars.Sync.csproj", "{6A990564-F61C-0B20-22EA-0F22922E73BE}"
 EndProject
@@ -10,6 +10,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dollars.Api", "Dollars.Api\Dollars.Api.csproj", "{9CC4351C-3EE8-4F0E-B8C9-5F6B701A78DA}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dollars.Kernel", "Dollars.Kernel\Dollars.Kernel.csproj", "{CE33248A-5FBF-4932-9E68-3D9C9B5E5CEC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dollars.Sync.Core", "Dollars.Sync.Core\Dollars.Sync.Core.csproj", "{F4737241-260F-4EFD-80B4-79D60F0DCC8D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -69,6 +71,18 @@ Global
 		{CE33248A-5FBF-4932-9E68-3D9C9B5E5CEC}.Release|x64.Build.0 = Release|Any CPU
 		{CE33248A-5FBF-4932-9E68-3D9C9B5E5CEC}.Release|x86.ActiveCfg = Release|Any CPU
 		{CE33248A-5FBF-4932-9E68-3D9C9B5E5CEC}.Release|x86.Build.0 = Release|Any CPU
+		{F4737241-260F-4EFD-80B4-79D60F0DCC8D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F4737241-260F-4EFD-80B4-79D60F0DCC8D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F4737241-260F-4EFD-80B4-79D60F0DCC8D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{F4737241-260F-4EFD-80B4-79D60F0DCC8D}.Debug|x64.Build.0 = Debug|Any CPU
+		{F4737241-260F-4EFD-80B4-79D60F0DCC8D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{F4737241-260F-4EFD-80B4-79D60F0DCC8D}.Debug|x86.Build.0 = Debug|Any CPU
+		{F4737241-260F-4EFD-80B4-79D60F0DCC8D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F4737241-260F-4EFD-80B4-79D60F0DCC8D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F4737241-260F-4EFD-80B4-79D60F0DCC8D}.Release|x64.ActiveCfg = Release|Any CPU
+		{F4737241-260F-4EFD-80B4-79D60F0DCC8D}.Release|x64.Build.0 = Release|Any CPU
+		{F4737241-260F-4EFD-80B4-79D60F0DCC8D}.Release|x86.ActiveCfg = Release|Any CPU
+		{F4737241-260F-4EFD-80B4-79D60F0DCC8D}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
