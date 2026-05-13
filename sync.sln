@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dollars.Kernel", "Dollars.K
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dollars.Sync.Core", "Dollars.Sync.Core\Dollars.Sync.Core.csproj", "{F4737241-260F-4EFD-80B4-79D60F0DCC8D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dollars.Sync.Functions", "Dollars.Sync.Functions\Dollars.Sync.Functions.csproj", "{3666426C-7937-40FB-9963-24024369D35F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -83,6 +85,18 @@ Global
 		{F4737241-260F-4EFD-80B4-79D60F0DCC8D}.Release|x64.Build.0 = Release|Any CPU
 		{F4737241-260F-4EFD-80B4-79D60F0DCC8D}.Release|x86.ActiveCfg = Release|Any CPU
 		{F4737241-260F-4EFD-80B4-79D60F0DCC8D}.Release|x86.Build.0 = Release|Any CPU
+		{3666426C-7937-40FB-9963-24024369D35F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3666426C-7937-40FB-9963-24024369D35F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3666426C-7937-40FB-9963-24024369D35F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{3666426C-7937-40FB-9963-24024369D35F}.Debug|x64.Build.0 = Debug|Any CPU
+		{3666426C-7937-40FB-9963-24024369D35F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{3666426C-7937-40FB-9963-24024369D35F}.Debug|x86.Build.0 = Debug|Any CPU
+		{3666426C-7937-40FB-9963-24024369D35F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3666426C-7937-40FB-9963-24024369D35F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3666426C-7937-40FB-9963-24024369D35F}.Release|x64.ActiveCfg = Release|Any CPU
+		{3666426C-7937-40FB-9963-24024369D35F}.Release|x64.Build.0 = Release|Any CPU
+		{3666426C-7937-40FB-9963-24024369D35F}.Release|x86.ActiveCfg = Release|Any CPU
+		{3666426C-7937-40FB-9963-24024369D35F}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

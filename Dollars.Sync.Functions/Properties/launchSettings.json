@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "Dollars_Sync_Functions": {
+      "commandName": "Project",
+      "commandLineArgs": "--port 7044",
+      "launchBrowser": false
+    }
+  }
+}
