@@ -1,3 +1,4 @@
+import { Outlet, useLocation } from "react-router-dom"
 import { AppSidebar } from "@/components/app-sidebar"
 import {
   Breadcrumb,
@@ -14,9 +15,20 @@ import {
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth";
 
+const pageTitles: Record<string, string> = {
+  "/": "Dashboard",
+  "/transactions": "Transactions",
+  "/accounts": "Accounts",
+  "/budget": "Budget",
+  "/reports": "Reports",
+  "/trends": "Trends",
+}
+
 const Home = () => {
 
   const { logout } = useAuth();
+  const location = useLocation()
+  const title = pageTitles[location.pathname] ?? "Dashboard"
 
   const handleClick = () => {
     logout();
@@ -32,7 +44,7 @@ const Home = () => {
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
-                <BreadcrumbPage>Dashboard</BreadcrumbPage>
+                <BreadcrumbPage>{title}</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
@@ -42,10 +54,7 @@ const Home = () => {
             </Button>
           </div>
         </header>
-        <div className="flex flex-1 flex-col gap-4 p-6">
-          <h1 className="text-2xl font-semibold">Dashboard</h1>
-          <p className="text-muted-foreground">the dollars</p>
-        </div>
+        <Outlet />
       </SidebarInset>
     </SidebarProvider>
   )
